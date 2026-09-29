@@ -23,7 +23,7 @@ def get_category(extension):
     return "Other"
 
 
-def organize(folder):
+def organize(folder, dry_run=False):
     folder = Path(folder).expanduser().resolve()
 
     if not folder.exists() or not folder.is_dir():
@@ -37,28 +37,46 @@ def organize(folder):
 
         category = get_category(file.suffix)
         destination = folder / category
-        destination.mkdir(exist_ok=True)
-
         target = destination / file.name
 
         if target.exists():
             print(f"Skipped: {file.name} (already exists)")
             continue
 
-        shutil.move(str(file), str(target))
-        print(f"Moved: {file.name} -> {category}/")
+        if dry_run:
+            print(f"Would move: {file.name} -> {category}/")
+        else:
+            destination.mkdir(exist_ok=True)
+            shutil.move(str(file), str(target))
+            print(f"Moved: {file.name} -> {category}/")
+
         moved += 1
 
-    print(f"\nDone. {moved} file(s) organized.")
+    if dry_run:
+        print(f"\nDry run complete. {moved} file(s) would be organized.")
+    else:
+        print(f"\nDone. {moved} file(s) organized.")
 
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python folder_cleaner.py <folder>")
+def main():
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print("Usage: python folder_cleaner.py <folder> [--dry-run]")
+        sys.exit(1)
+
+    folder = sys.argv[1]
+    dry_run = len(sys.argv) == 3 and sys.argv[2] == "--dry-run"
+
+    if len(sys.argv) == 3 and sys.argv[2] != "--dry-run":
+        print("Error: unknown option")
+        print("Usage: python folder_cleaner.py <folder> [--dry-run]")
         sys.exit(1)
 
     try:
-        organize(sys.argv[1])
+        organize(folder, dry_run=dry_run)
     except ValueError as error:
         print(f"Error: {error}")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
