@@ -38,6 +38,20 @@ class TestFolderCleaner(unittest.TestCase):
                 (folder / "Archives" / "archive.zip").exists()
             )
 
+    def test_dry_run_does_not_move_files(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            folder = Path(temp_dir)
+
+            file = folder / "photo.jpg"
+            file.write_text("test")
+
+            organize(folder, dry_run=True)
+
+            self.assertTrue(file.exists())
+            self.assertFalse(
+                (folder / "Images" / "photo.jpg").exists()
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
